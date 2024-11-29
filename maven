@@ -1,42 +1,58 @@
+#!/bin/bash
+
 ## Apache Maven Installation And Setup In AWS EC2 Redhat Instance.
 ##### Prerequisite
-+ AWS Acccount.
-+ Create Redhat EC2 T2.medium Instance with 4GB of RAM.
-+ Create Security Group and open Required ports.
-+ (SSH) :22 ..etc
-+ Attach Security Group to EC2 Instance.
-+ Install java openJDK 1.8+
+# + AWS Account.
+# + Create Redhat EC2 T2.medium Instance with 4GB of RAM.
+# + Create Security Group and open Required ports.
+# + (SSH) :22 ..etc
+# + Attach Security Group to EC2 Instance.
+# + Install Java OpenJDK 1.8+ (default).
 
-### Install Java JDK 1.8+  and other softares (GIT, wget and tree)
+### Install Java JDK 1.8+ and other software (GIT, wget, vim, unzip, and tree)
 
-``` sh
-# install Java JDK 1.8+ as a pre-requisit for maven to run.
-
+echo "Installing required packages..."
 sudo hostname maven
 cd /opt
 sudo yum install wget vim tree unzip git-all -y
-sudo yum install java-11-openjdk-devel java-1.8.0-openjdk-devel -y
+
+# Install Java 1.8 (OpenJDK 8) as a prerequisite for Maven to run
+echo "Installing Java OpenJDK 1.8..."
+sudo yum install java-1.8.0-openjdk-devel -y
+
+# Verify Java version
+echo "Verifying Java installation..."
 java -version
 git --version
-```
 
-## 2. Download, extract and Install Maven
-``` sh
-#Step1) Download the Maven Software
-sudo sudo wget https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.zip
+### 2. Download, Extract, and Install Maven
 
-sudo  sudo unzip apache-maven-3.9.9-bin.zip
+echo "Downloading and installing Maven..."
+# Step 1) Download the Maven Software (latest version)
+sudo wget https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.zip
+
+# Step 2) Unzip the downloaded file
+sudo unzip apache-maven-3.9.9-bin.zip -d /opt
+
+# Clean up by removing the zip file
 sudo rm -rf apache-maven-3.9.9-bin.zip
-sudo mv apache-maven-3.9.9/ maven
-```
-## .#Step3) Set Environmental Variable  - For Specific User eg ec2-user
-``` sh
-vi ~/.bash_profile  # and add the lines below
-export M2_HOME=/opt/maven
-export PATH=$PATH:$M2_HOME/bin
-```
-## .#Step4) Refresh the profile file and Verify if maven is running
-```sh
+
+# Rename the extracted directory to 'maven' for easier reference
+sudo mv /opt/apache-maven-3.9.9 /opt/maven
+
+### 3. Set Environmental Variables for the Specific User (e.g., `ec2-user`)
+
+echo "Setting up environment variables for Maven..."
+# Open .bash_profile to edit
+echo "export M2_HOME=/opt/maven" >> ~/.bash_profile
+echo "export PATH=\$PATH:\$M2_HOME/bin" >> ~/.bash_profile
+
+### 4. Refresh the Profile File and Verify Maven Installation
+
+echo "Refreshing the profile and verifying Maven installation..."
+# Apply the changes made to the .bash_profile
 source ~/.bash_profile
+
+# Verify Maven is correctly installed
 mvn -version
-```
+
