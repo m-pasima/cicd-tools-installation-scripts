@@ -1,0 +1,73 @@
+#!/bin/bash
+#Author: M N Pasima
+# SonarQube Installation Script for RHEL (EC2 t2.medium or larger)
+# This script installs and configures SonarQube with Elasticsearch on RHEL-based systems.
+
+# Step 1: Check system resources
+echo "Checking system resources..."
+free -h
+df -h
+
+# Step 2: Install Java (OpenJDK 11)
+echo "Installing OpenJDK 11..."
+sudo yum install -y java-11-openjdk-devel
+
+# Verify Java installation
+java_version=$(java -version 2>&1 | head -n 1)
+if [[ $java_version == *"openjdk version"* ]]; then
+    echo "Java installed successfully: $java_version"
+else
+    echo "Java installation failed. Please check the logs."
+    exit 1
+fi
+
+# Step 3: Install required dependencies
+echo "Installing required dependencies (wget, unzip, git)..."
+sudo yum install -y wget unzip git
+
+# Step 4: Download and Install SonarQube
+SONAR_VERSION="7.8"
+SONAR_DIR="/opt/sonarqube"
+echo "Downloading SonarQube version $SONAR_VERSION..."
+sudo wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-${SONAR_VERSION}.zip -P /opt
+
+# Extract SonarQube
+echo "Extracting SonarQube..."
+sudo unzip /opt/sonarqube-${SONAR_VERSION}.zip -d /opt
+sudo rm /opt/sonarqube-${SONAR_VERSION}.zip
+
+# Rename extracted folder for easier management
+sudo mv /opt/sonarqube-${SONAR_VERSION} $SONAR_DIR
+
+# Step 5: Set ownership and permissions for SonarQube
+echo "Setting ownership and permissions for SonarQube..."
+sudo chown -R sonar:sonar $SONAR_DIR
+sudo chmod -R 775 $SONAR_DIR
+
+# Step 6: Configure SonarQube to use Java 11
+echo "Configuring SonarQube to use Java 11..."
+SONAR_CONF="$SONAR_DIR/conf/sonar.properties"
+
+# Set Java home in SonarQube configuration (for Java 11)
+echo "sonar.java.home=/usr/lib/jvm/java-11-openjdk" | sudo tee -a $SONAR_CONF
+
+# Step 7: Set the system hostname to 'sonar'
+echo "Setting system hostname to 'sonar'..."
+sudo hostnamectl set-hostname sonar
+
+# Step 8: Start SonarQube as the 'sonar' user
+echo "Starting SonarQube..."
+# Switch to sonar user (make sure the sonar user exists)
+sudo su - sonar -c "cd $SONAR_DIR/bin/linux-x86-64 && ./sonar.sh start"
+
+# Step 9: Verify SonarQube status
+echo "Verifying SonarQube status..."
+sudo su - sonar -c "cd $SONAR_DIR/bin/linux-x86-64 && ./sonar.sh status"
+
+# Step 10: SonarQube Web Interface Access
+echo "SonarQube has been started. You can access the web interface at:"
+echo "http://<your-server-ip>:9000"
+echo "Login with default credentials: Username: admin, Password: admin"
+
+# Finished
+echo "SonarQube installation and configuration completed!"
